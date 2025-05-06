@@ -1,0 +1,33 @@
+@using EventEase.Models
+
+@if (Attendees != null && Attendees.Any())
+{
+    <ul class="attendees-list">
+        @foreach (var attendee in Attendees)
+        {
+            <li>@attendee.Name (@attendee.Email)</li>
+        }
+    </ul>
+}
+else
+{
+    <p>No attendees yet.</p>
+}
+
+@code {
+    [Parameter]
+    public List<UserModel>? Attendees { get; set; }
+}
+
+<style>
+    .attendees-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .attendees-list li {
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+</style>

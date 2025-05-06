@@ -1,0 +1,132 @@
+@using EventEase.Models
+@inject UserSessionService UserSessionService
+
+<EditForm Model="Event" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Event Name:</label>
+        <InputText @bind-value="Event.Name" class="form-control" />
+        <ValidationMessage For="@(() => Event.Name)" />
+    </div>
+    <div class="event-date">
+        <label>Start Date:</label>
+        <div>            
+            <InputDate @bind-Value="EditStartDate" class="form-control" />
+            <ValidationMessage For="@(() => Event.StartDate)" />
+        </div>
+        <div>            
+            <input type="time" @bind="EditStartTime" class="form-control"/>
+        </div>
+    </div>
+    <div class="event-date">
+        <label>End Date:</label>
+        <div>            
+            <InputDate @bind-Value="EditEndDate" class="form-control" />
+            <ValidationMessage For="@(() => Event.EndDate)" />
+        </div>
+        <div>            
+            <input type="time" @bind="EditEndTime" class="form-control"/>
+        </div>
+    </div>
+    <div>
+        <label>Event Location:</label>
+        <InputText @bind-Value="Event.Location" class="form-control" />
+    </div>
+    <div>
+        <label>Event Description:</label>
+        <InputText @bind-Value="Event.Description" class="form-control" />
+    </div>    
+    <button type="submit" class="btn btn-primary">@SubmitButtonText</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public EventModel Event { get; set; } = new EventModel();
+
+    [Parameter]
+    public EventCallback<EventModel> OnSubmit { get; set; }
+
+    [Parameter]
+    public string SubmitButtonText { get; set; } = "Save";
+
+    private DateTime EditStartDate
+    {
+        get => Event.StartDate.Date;
+        set => Event.StartDate = value.Date + Event.StartDate.TimeOfDay;
+    }
+
+    private DateTime EditStartTime
+    {
+        get => Event.StartDate;
+        set => Event.StartDate = Event.StartDate.Date + value.TimeOfDay;
+    }
+
+    private DateTime EditEndDate
+    {
+        get => Event.EndDate.Date;
+        set => Event.EndDate = value.Date + Event.EndDate.TimeOfDay;
+    }
+
+    private DateTime EditEndTime
+    {
+        get => Event.EndDate;
+        set => Event.EndDate = Event.EndDate.Date + value.TimeOfDay;
+    }
+
+    protected override void OnInitialized()
+    {
+        // Ensure StartDate and EndDate are initialized to tomorrow
+        if (Event.StartDate == default)
+        {
+            Event.StartDate = DateTime.Now.AddDays(1); // Tomorrow at the same time
+        }
+
+        if (Event.EndDate == default)
+        {
+            Event.EndDate = Event.StartDate.AddHours(1); // Tomorrow, 1 hour later
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        await OnSubmit.InvokeAsync(Event);
+    }
+
+    private bool IsCurrentUserAttendee()
+    {
+        if (UserSessionService.CurrentUser == null || Event == null)
+        {
+            return false;
+        }
+
+        return Event.Attendees.Any(a => a.Email == UserSessionService.CurrentUser.Email);
+    }
+}
+
+<style>
+    .form-control {
+        margin-bottom: 10px;
+    }
+
+    .event-attendee-status {
+        margin-top: 10px;
+    }
+
+    .event-date {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: left;
+        margin-bottom: 10px;
+    }
+    
+    .text-success {
+        color: green;
+    }
+
+    button {
+        margin-top: 10px;
+    }
+</style>

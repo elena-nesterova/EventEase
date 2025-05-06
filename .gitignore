@@ -1,0 +1,55 @@
+# Ignore build output directories
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# IDE-specific files
+.vscode/
+.idea/
+*.code-workspace
+
+# Dependency directories
+node_modules/
+wwwroot/lib/
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.pdb
+*.mdb
+
+# Publish output
+publish/
+dist/
+
+# Configuration files
+appsettings.*.json
+!appsettings.json # Keep the base appsettings.json file
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Rider IDE files
+*.iml
+.idea/
+
+# Visual Studio Code files
+.vscode/
+
+# JetBrains Rider files
+.idea/
+*.iml
+
+# Other
+*.bak
+*.swp

@@ -1,0 +1,209 @@
+@page "/"
+
+@using EventEase.Models
+@using EventEase.Components
+@inject EventService EventService
+@inject UserSessionService UserSessionService
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Routing
+
+<div class="header">
+    <h1>Welcome to EventEase</h1>
+    <p>Browse our events:</p>
+    <div class="filter-buttons">
+        <button class="btn btn-primary" @onclick="ShowUpcomingEvents">Upcoming Events</button>
+        <button class="btn btn-secondary" @onclick="ShowPastEvents">Past Events</button>
+    </div>
+</div>
+
+@if (UserSessionService.IsLoggedIn)
+{
+    <p>Welcome, @(UserSessionService.CurrentUser?.Name ?? "Guest")!</p>
+    <button @onclick="Logout">Logout</button>
+}
+else
+{
+    <NavLink href="@($"/register?returnUrl={Uri.EscapeDataString(Navigation.Uri)}")" class="btn btn-primary">Register</NavLink>
+}
+
+<div class="event-container">
+    <div class="event-list">
+        <Virtualize ItemsProvider="LoadPagedEvents" Context="eventModel" TItem="EventModel" @key="(currentPage, showUpcoming)">
+            <NavLink class="event-link" href="@($"/eventdetails/{eventModel.Id}")">            
+                <EventCard Model="eventModel" />
+            </NavLink>
+        </Virtualize>
+    </div>
+
+    <div class="pagination">
+        <button class="btn btn-secondary" @onclick="PreviousPage" disabled="@(currentPage <= 1)">Previous</button>
+        <span>Page @currentPage from @pagesAmount</span>
+        <button class="btn btn-secondary" @onclick="NextPage" disabled="@(pagesAmount == currentPage)">Next</button>
+    </div>
+</div>
+
+<button class="btn btn-success fixed-button" @onclick="NavigateToNewEvent">New Event</button>
+
+@code {
+    private int currentPage = 1;
+    private int pageSize = 10;
+
+    private int pagesAmount = 0;
+    private bool showUpcoming = true;
+
+    private void UpdatePagesAmount()
+    {
+        // Calculate the number of pages based on the filtered events      
+        var filteredEvents = EventService.Events?
+            .Where(e => showUpcoming ? e.StartDate >= DateTime.Now : e.StartDate < DateTime.Now) // Filter based on the selected button
+            .OrderBy(e => e.StartDate)
+            .ToList() ?? new List<EventModel>();
+        
+        pagesAmount = filteredEvents.Count % pageSize == 0 ? filteredEvents.Count / pageSize : (filteredEvents.Count / pageSize) + 1;
+    }
+
+
+    protected override void OnInitialized()
+    {
+        UpdatePagesAmount(); // Initialize pages amount
+    }
+
+    private async ValueTask<ItemsProviderResult<EventModel>> LoadPagedEvents(ItemsProviderRequest request)
+    {        
+        var filteredEvents = EventService.Events?
+            .Where(e => showUpcoming ? e.StartDate >= DateTime.Now : e.StartDate < DateTime.Now) // Filter based on the selected button
+            .OrderBy(e => e.StartDate)
+            .ToList() ?? new List<EventModel>();
+
+        
+        pagesAmount = filteredEvents.Count % pageSize == 0 ? filteredEvents.Count / pageSize : (filteredEvents.Count / pageSize) + 1;
+
+        // Calculate the start index based on the current page
+        var startIndex = (currentPage - 1) * pageSize;
+
+        // Fetch the items for the current page
+        var items = filteredEvents
+            .Skip(startIndex)
+            .Take(pageSize)
+            .ToList();
+
+        return await Task.FromResult(new ItemsProviderResult<EventModel>(items, pageSize));
+    }
+    
+    private void ShowUpcomingEvents()
+    {        
+        showUpcoming = true;
+        UpdatePagesAmount();
+        currentPage = 1; // Reset to the first page
+        StateHasChanged();
+    }
+
+    private void ShowPastEvents()
+    {
+        showUpcoming = false;
+        UpdatePagesAmount();
+        currentPage = 1; // Reset to the first page
+        StateHasChanged();
+    }
+
+    private void NextPage()
+    {
+        if (currentPage  < pagesAmount)
+        {
+            currentPage++;
+            StateHasChanged(); // Trigger UI refresh
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            StateHasChanged(); // Trigger UI refresh
+        }
+    }
+
+    private void NavigateToNewEvent()
+    {
+        Navigation.NavigateTo("/event-registration");
+    }
+
+    private void Logout()
+    {
+        UserSessionService.Logout();
+    }
+}
+
+<style>
+    .header {
+        position: static;
+        top: 0;
+        background-color: transparent;
+        z-index: 10;
+        padding: 10px 0;
+    }
+
+    .filter-buttons {
+        margin: 10px 0;
+    }
+
+    .filter-buttons .btn {
+        margin-right: 10px;
+    }
+
+    .event-container {
+        display: flex;
+        flex-direction: column; /* Stack the event list and pagination vertically */
+        align-items: center; /* Center-align the pagination buttons */
+        gap: 20px; /* Add spacing between the event list and pagination */
+    }
+
+    .event-list {
+        width: 100%; /* Ensure the event list takes the full width */
+        display: grid;
+        grid-template-columns: 1fr; /* Default to single column */
+        gap: 10px;
+    }
+ 
+    .pagination {
+        display: flex;
+        justify-content: center; /* Center-align the buttons */
+        gap: 10px; /* Add spacing between the buttons */
+    }
+
+    .btn {
+        margin-right: 10px;
+        text-decoration: none;
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .fixed-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 20;
+    }
+
+    .event-link {
+        text-decoration: none;
+        color: inherit;
+    }
+</style>

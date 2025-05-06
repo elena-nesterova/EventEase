@@ -1,0 +1,139 @@
+@page "/eventdetails/{eventId:int}"
+
+@using EventEase.Models
+@using EventEase.Components
+
+@inject EventService EventService
+@inject UserSessionService UserSessionService
+@inject NavigationManager Navigation
+
+<h1>Event Details</h1>
+
+@if (eventDetail != null)
+{
+    @if (UserSessionService.CurrentUser != null && eventDetail.CreatedBy?.Email == UserSessionService.CurrentUser.Email)
+    {
+        <EventEditCard Event="eventDetail" SubmitButtonText="Save Changes" OnSubmit="HandleValidSubmit" />
+    }
+    else
+    {
+        <EventDetailsCard Event="eventDetail" />
+    }
+
+    <h2>Attendees</h2>
+
+    <div class="attendees-info">
+        <p>@eventDetail.Attendees.Count attendees registered</p>
+        @if (eventDetail.Attendees.Count > 0)
+        {
+            <button class="btn btn-info" @onclick="ToggleAttendeesList">
+                @((showAttendees ? "Hide " : "Show ") + "Attendees")
+            </button>            
+        }  
+    </div>  
+    @if (showAttendees)
+    {
+        <AttendeesList Attendees="eventDetail.Attendees" />
+    }      
+
+    @if (eventDetail.StartDate >= DateTime.Now)
+    {
+        @if (IsCurrentUserAttendee())
+        {
+            <p class="text-success">You are an attendee of this event.</p>
+            <button class="btn btn-danger" @onclick="CancelAttendance">Cancel Attendance</button>
+        }
+        else if (!UserSessionService.IsLoggedIn && eventDetail.StartDate > DateTime.Now)
+        {
+            <p class="text-danger">You must register in to attend this event.</p>
+            <NavLink href="@($"/register?returnUrl={Uri.EscapeDataString(Navigation.Uri)}")" class="btn btn-primary">Register</NavLink>
+        }
+        else
+        {
+            <button class="btn btn-primary" @onclick="MarkAttendance">Mark Attendance</button>
+        }
+    } 
+      
+}
+else
+{
+    <p>Loading event details...</p>
+}
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    private EventModel? eventDetail;
+
+    private bool showAttendees = false; // Tracks whether the attendees list is visible
+
+    
+    protected override void OnInitialized()
+    {
+        // Fetch the event details based on the EventId
+        eventDetail = EventService.Events.FirstOrDefault(e => e.Id == EventId);        
+    }
+
+    private void ToggleAttendeesList()
+    {
+        showAttendees = !showAttendees; // Toggle the visibility of the attendees list
+    }
+
+    private void HandleValidSubmit(EventModel updatedEvent)
+    {
+        // Save changes to the event in the EventService list
+        var eventFromService = EventService.Events.FirstOrDefault(e => e.Id == EventId);
+        if (eventFromService != null)
+        {
+            eventFromService.Name = updatedEvent.Name;
+            eventFromService.StartDate = updatedEvent.StartDate;
+            eventFromService.EndDate = updatedEvent.EndDate;
+            eventFromService.Location = updatedEvent.Location;
+            eventFromService.Description = updatedEvent.Description;
+        }
+
+        Navigation.NavigateTo("/");
+    }
+
+    private bool IsCurrentUserAttendee()
+    {
+        if (UserSessionService.CurrentUser == null || eventDetail == null)
+        {
+            return false;
+        }
+
+        return eventDetail.Attendees.Any(a => a.Email == UserSessionService.CurrentUser.Email);
+    }
+
+    private void MarkAttendance()
+    {
+        if (UserSessionService.CurrentUser != null && eventDetail != null)
+        {
+            eventDetail.Attendees.Add(UserSessionService.CurrentUser);
+        }
+    }
+
+    private void CancelAttendance()
+    {
+        if (UserSessionService.CurrentUser != null && eventDetail != null)
+        {
+            var attendee = eventDetail.Attendees.FirstOrDefault(a => a.Email == UserSessionService.CurrentUser.Email);
+            if (attendee != null)
+            {
+                eventDetail.Attendees.Remove(attendee);
+            }
+        }
+    }
+}
+
+<style>
+    .attendees-info {
+        display: flex;
+        flex-direction: row;        
+        justify-content: flex-start;
+        align-items: center;
+        gap: 10px;
+    }
+    
+</style>

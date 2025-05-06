@@ -1,0 +1,54 @@
+@page "/register"
+
+@using Microsoft.AspNetCore.WebUtilities
+@using EventEase.Models
+@inject NavigationManager Navigation
+@inject UserSessionService UserSessionService
+
+<h1>User Registration</h1>
+
+<EditForm Model="user" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Name:</label>
+        <InputText @bind-Value="user.Name" class="form-control" />
+    </div>
+    <div>
+        <label>Email:</label>
+        <InputText @bind-Value="user.Email" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary">Register</button>
+</EditForm>
+
+@code {
+    private UserModel user = new UserModel();
+    private string? returnUrl;
+
+    protected override void OnInitialized()
+    {
+        // Parse the query string to get the returnUrl parameter
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var returnUrlValue))
+        {
+            returnUrl = returnUrlValue;
+        }
+    }
+
+    private void HandleValidSubmit()
+    {
+        // Save user data in the session service
+        UserSessionService.Login(user);
+
+        // Navigate to the returnUrl if provided, otherwise go to the home page
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            Navigation.NavigateTo(returnUrl);
+        }
+        else
+        {
+            Navigation.NavigateTo("/");
+        }
+    }
+}

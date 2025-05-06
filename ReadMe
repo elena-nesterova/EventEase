@@ -1,0 +1,13 @@
+EventEase is a Blazor-based web application designed to manage and browse events. Users can view upcoming and past events, register for events, and manage their attendance. Key features include:
+
+Event Listing: Displays events with pagination, allowing users to navigate through pages of events.
+
+Event Filtering: Users can filter events by upcoming or past events using dedicated buttons.
+
+Event Details: Provides detailed information about each event, including attendees and registration options.
+
+User Authentication: Supports user login, logout, and registration.
+
+Event Management: Allows users to create, edit, and manage events.
+
+Responsive Design: Ensures a user-friendly experience across devices with a clean and modern UI.
