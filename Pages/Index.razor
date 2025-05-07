@@ -23,13 +23,13 @@
 }
 else
 {
-    <NavLink href="@($"/register?returnUrl={Uri.EscapeDataString(Navigation.Uri)}")" class="btn btn-primary">Register</NavLink>
+    <NavLink href="@($"register?returnUrl={Uri.EscapeDataString(Navigation.Uri)}")" class="btn btn-primary">Register</NavLink>
 }
 
 <div class="event-container">
     <div class="event-list">
         <Virtualize ItemsProvider="LoadPagedEvents" Context="eventModel" TItem="EventModel" @key="(currentPage, showUpcoming)">
-            <NavLink class="event-link" href="@($"/eventdetails/{eventModel.Id}")">            
+            <NavLink class="event-link" href="@($"eventdetails/{eventModel.Id}")">            
                 <EventCard Model="eventModel" />
             </NavLink>
         </Virtualize>
@@ -126,7 +126,7 @@ else
 
     private void NavigateToNewEvent()
     {
-        Navigation.NavigateTo("/event-registration");
+        Navigation.NavigateTo("event-registration");
     }
 
     private void Logout()

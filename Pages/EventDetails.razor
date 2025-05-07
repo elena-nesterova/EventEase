@@ -46,7 +46,7 @@
         else if (!UserSessionService.IsLoggedIn && eventDetail.StartDate > DateTime.Now)
         {
             <p class="text-danger">You must register in to attend this event.</p>
-            <NavLink href="@($"/register?returnUrl={Uri.EscapeDataString(Navigation.Uri)}")" class="btn btn-primary">Register</NavLink>
+            <NavLink href="@($"register?returnUrl={Uri.EscapeDataString(Navigation.Uri)}")" class="btn btn-primary">Register</NavLink>
         }
         else
         {
